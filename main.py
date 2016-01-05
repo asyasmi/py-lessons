@@ -3,6 +3,13 @@ import getopt
 import sys 
 import os.path
 
+
+def file_processing(file):
+	with open (file, "r") as f:
+		for line in f:
+			print(line, end='\n')
+
+
 def usage():
 	print("Usage: {0} --file=~./data.txt".format(sys.argv[0]))
 
@@ -41,11 +48,8 @@ def main():
 		if not (os.path.isfile(file) and os.access(file, os.R_OK)):
 			usage()
 			sys.exit(3)
+	file_processing(file)
 
-
-	with open (file, "r") as f:
-		for line in f:
-			print(line, end='\n')
 
 
 if __name__ == "__main__":
