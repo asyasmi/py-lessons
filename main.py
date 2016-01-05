@@ -1,22 +1,52 @@
 #!/usr/bin/env python3
-import random 
+import getopt
+import sys 
+import os.path
 
-def start_game(min_num, max_num, try_to, random_num):
-	print("Passed args: %s %s %s %s" % (min_num, max_num, try_to, random_num))
+def usage():
+	print("Usage: {0} --file=~./data.txt".format(sys.argv[0]))
 
-min_num = 0
-max_num = 100
-try_to = 3 
-random_num = random.randrange(min_num, max_num)
 
-print("Try to guess the number I think about. It's from {0} to {1}".format(min_num, max_num))
-print("You have {0} tries".format(try_to))
+def main():
+	try:
+		opts, args = getopt.getopt(
+			sys.argv[1:], "hf:v", ["help", "file=", "verbose"]
+			)
+	except getopt.GetoptError as err:
+		print(err)
+		usage()
+		sys.exit(1)
+	file = None
+	verbose = False
+	for o, a in opts:
+		if o in ("-h", "--help"):
+			usage()
+			sys.exit(0)
+		elif o in ("-v", "--verbose"):
+			verbose = True
+		elif o in ("-f", "--file"):		
+			if a and os.path.isfile(a) and os.access(a, os.R_OK):
+				file = a
+			else:
+				print(
+					"Error: -f|--file reqires path to readable file. ", 
+					file=sys.stderr
+				)
+				usage()
+				sys.exit(2)
 
-text = input("Enter the number: ")
-print(text)
+	if not file:
+		dirname = os.path.abspath(os.path.dirname(sys.argv[0]))
+		file = os.path.join(dirname, 'data.txt')
+		if not (os.path.isfile(file) and os.access(file, os.R_OK)):
+			usage()
+			sys.exit(3)
 
-start_game(min_num, max_num, try_to, random_num)
 
-with open ("main.py", "r") as file:
-	for line in file:
-		print(line, end='')
+	with open (file, "r") as f:
+		for line in f:
+			print(line, end='\n')
+
+
+if __name__ == "__main__":
+    main()
