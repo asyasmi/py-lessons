@@ -6,11 +6,19 @@ import requests
 import re
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+import platform
+import tempfile
+import ctypes
 
 """"""""""""""""""""
 " Global variables "
 """"""""""""""""""""
-verbose = False
+DEBUG = False
+OS_PACK = {
+	'Darwin_64bit': r'/(Unity-)[\d\w.]+\.pkg',
+	'Windows_64bit': r'/(UnitySetup64-)[\d\w.]+\.exe',
+	'Windows_32bit': r'/(UnitySetup32-)[\d\w.]+\.exe',
+}
 
 
 def error(msg):
@@ -18,11 +26,40 @@ def error(msg):
 
 
 def debug(msg):
-	if verbose:
+	if DEBUG:
 		print("[DEBUG] {0}".format(msg), file=sys.stderr)
 
 
-def file_processing(file):
+def install_from_uri(uri, system, tmp_dir):
+	file_name = os.path.join(tmp_dir, os.path.basename(uri))
+	try:
+		download_file(uri, file_name)
+	except Exception as e:
+		error("Cannot download file from url: " + uri)
+		return False
+	if system in ("Darwin_64bit"):
+		#ex_code = os.system("mv {0} /tmp/1.exe".format(file_name))
+		ex_code = os.system("installer -package {0} -target /Users/asyasmirnova/Test".format(file_name))
+		if ex_code != 0:
+			error("Can't install " + file_name)
+			return False
+	elif system in ("Windows_32bit", "Windows_64bit"):
+		error("Currently not supported")
+		return False
+	return True
+
+
+def download_file(uri, file_name):
+	debug("Downloading '{0}' into {1}".format(uri, file_name))
+	r = requests.get(uri, stream=True)
+	with open (file_name, "wb") as fd:
+		for chunk in r.iter_content(100):
+			fd.write(chunk)
+	debug("File {0} sussefully downloaded!".format(file_name))
+
+
+def file_processing(file, system, tmp_dir):
+	to_download = list()
 	with open (file, "r") as f:
 		for url in f:
 			url = url.rstrip('\r\n')
@@ -44,6 +81,11 @@ def file_processing(file):
 				link = urljoin(url, link.get("href"))
 				debug("Link found: {0}".format(link))
 				links_list.append(link)
+			regex = OS_PACK[system]
+			to_install = [i for i in links_list if re.search(regex, i)]
+			debug("Files to download and istall " + " ".join(to_install))
+			for uri in to_install:
+				install_from_uri(uri, system, tmp_dir)
 
 
 def get_url_content(url, repeat=3):
@@ -67,44 +109,69 @@ def usage():
 	print("Usage: {0} --file=~./data.txt".format(sys.argv[0]))
 
 
-
 def main():
 	try:
-		opts, args = getopt.getopt(
-			sys.argv[1:], "hf:v", ["help", "file=", "verbose"]
-			)
-	except getopt.GetoptError as err:
-		print(err)
-		usage()
+		is_admin = os.geteuid() == 0
+	except AttributeError:
+		is_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
+
+	if not is_admin:
+		error("Need to have a superpower!")
 		sys.exit(1)
+
+	system = platform.system() + '_' + platform.architecture()[0]
+
+	if not system in OS_PACK.keys():
+		error("Platform {0} is not in the list '{1}'".format(system,
+			"', ' ".join(OS_PACK.keys())))
+		sys.exit(2)
+
+	try:
+		opts, args = getopt.getopt(
+			sys.argv[1:], "hf:d", ["help", "file=", "debug"]
+		)
+	except getopt.GetoptError as err:
+		error(err)
+		usage()
+		sys.exit(3)
+
 	file = None
 	for o, a in opts:
 		if o in ("-h", "--help"):
 			usage()
 			sys.exit(0)
-		elif o in ("-v", "--verbose"):
-			global verbose
-			verbose = True
+		elif o in ("-d", "--debug"):
+			global DEBUG
+			DEBUG = True
 		elif o in ("-f", "--file"):		
 			if a and os.path.isfile(a) and os.access(a, os.R_OK):
 				file = a
 			else:
-				print(
+				error(
 					"Error: -f|--file reqires path to readable file. ", 
 					file=sys.stderr
 				)
 				usage()
-				sys.exit(2)
+				sys.exit(4)
 
+	#Chech for path, if is not given - use default path
 	if not file:
 		dirname = os.path.abspath(os.path.dirname(sys.argv[0]))
 		file = os.path.join(dirname, 'data.txt')
 		if not (os.path.isfile(file) and os.access(file, os.R_OK)):
 			usage()
-			sys.exit(3)
-	file_processing(file)
+			sys.exit(5)
+		debug("Using default file path: " + file)
+
+	with tempfile.TemporaryDirectory() as tmp_dir:
+		file_processing(file, system, tmp_dir)
 
 
 if __name__ == "__main__":
-    main()
-
+	try:
+		main()
+	except KeyboardInterrupt:
+		pass
+	except Exception as e:
+		error("Unexpected error: " + e)
+		sys.exit(6)
