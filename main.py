@@ -37,16 +37,36 @@ def install_from_uri(uri, system, tmp_dir):
 	except Exception as e:
 		error("Cannot download file from url: " + uri)
 		return False
+	new_dir = os.path.basename(uri)[:os.path.basename(uri).rfind(".")]
 	if system in ("Darwin_64bit"):
 		#ex_code = os.system("mv {0} /tmp/1.exe".format(file_name))
-		ex_code = os.system("installer -package {0} -target /Users/asyasmirnova/Test".format(file_name))
+		ex_code = os.system("installer -package {0} -target /".format(file_name))
 		if ex_code != 0:
 			error("Can't install " + file_name)
 			return False
-	elif system in ("Windows_32bit", "Windows_64bit"):
-		error("Currently not supported")
-		return False
-	return True
+		else:
+			if os.path.isdir("/Applications/Unity") and not os.path.isdir("Applications/{0}'".format(new_dir)):
+				os.rename("/Applications/Unity", "/Applications/{0}".format(new_dir)
+				debug("Folder renamed to 'Applications/{0}'".format(new_dir)
+				return True
+			else:
+				#I think we need to move it _before_ we download or move to new func
+				error("Folder 'Applications/{0}' already exists. Please rename it and repeat".format(new_dir)
+	elif system in ("Windows_64bit"):
+		#error("Currently not supported")
+		ex_code = os.system("{0} /S /D=C:\Program files\{1}}".format(file_name, new_dir))
+		if ex_code != 0:
+			error("Can't install " + file_name)
+			return False
+		else:
+			return True
+	elif system in ("Windows_32bit"):
+		ex_code = os.system("{0} /S /D=C:\Program files (x86)\{1}}".format(file_name, new_dir)
+		if ex_code != 0:
+			error("Can't install " + file_name)
+			return False
+		else:
+			return True
 
 
 def download_file(uri, file_name):
