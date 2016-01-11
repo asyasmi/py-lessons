@@ -45,28 +45,19 @@ def install_from_uri(uri, system, tmp_dir):
 			error("Can't install " + file_name)
 			return False
 		else:
-			if os.path.isdir("/Applications/Unity") and not os.path.isdir("Applications/{0}'".format(new_dir)):
-				os.rename("/Applications/Unity", "/Applications/{0}".format(new_dir)
+			if os.path.isdir("/Applications/Unity"):
+				if os.path.isdir("Applications/{0}'".format(new_dir)):
+					os.system("unlink /Applications/{0}".format(new_dir))
+				os.rename("/Applications/Unity", "/Applications/{0}".format(new_dir))
 				debug("Folder renamed to 'Applications/{0}'".format(new_dir)
-				return True
-			else:
-				#I think we need to move it _before_ we download or move to new func
-				error("Folder 'Applications/{0}' already exists. Please rename it and repeat".format(new_dir)
-	elif system in ("Windows_64bit"):
+	elif system in ("Windows_64bit", "Windows_32bit"):
 		#error("Currently not supported")
-		ex_code = os.system("{0} /S /D=C:\Program files\{1}}".format(file_name, new_dir))
+		ex_code = os.system("{0} /S /D='C:\Program files\{1}'".format(file_name, new_dir))
+		#check ex_code in Windows
 		if ex_code != 0:
 			error("Can't install " + file_name)
 			return False
-		else:
-			return True
-	elif system in ("Windows_32bit"):
-		ex_code = os.system("{0} /S /D=C:\Program files (x86)\{1}}".format(file_name, new_dir)
-		if ex_code != 0:
-			error("Can't install " + file_name)
-			return False
-		else:
-			return True
+	return True
 
 
 def download_file(uri, file_name):
