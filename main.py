@@ -49,7 +49,7 @@ def install_from_uri(uri, system, tmp_dir):
 				if os.path.isdir("Applications/{0}'".format(new_dir)):
 					os.system("unlink /Applications/{0}".format(new_dir))
 				os.rename("/Applications/Unity", "/Applications/{0}".format(new_dir))
-				debug("Folder renamed to 'Applications/{0}'".format(new_dir)
+				debug("Folder renamed to 'Applications/{0}'".format(new_dir))
 	elif system in ("Windows_64bit", "Windows_32bit"):
 		#error("Currently not supported")
 		ex_code = os.system("{0} /S /D='C:\Program files\{1}'".format(file_name, new_dir))
