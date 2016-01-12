@@ -52,10 +52,16 @@ def install_from_uri(uri, system, tmp_dir):
 				debug("Folder renamed to 'Applications/{0}'".format(new_dir))
 	elif system in ("Windows_64bit", "Windows_32bit"):
 		#error("Currently not supported")
-		ex_code = os.system("{0} /S /D='C:\Program files\{1}'".format(file_name, new_dir))
-		#check ex_code in Windows
-		if ex_code != 0:
-			error("Can't install " + file_name)
+		debug("installing from " + file_name + " to " + new_dir)
+		try: 
+			debug("{0} /S /D='C:\Program files\{1}'".format(file_name, new_dir))
+			ex_code = os.system("{0} /S /D='C:\Program files\{1}'".format(file_name, new_dir))
+			#check ex_code in Windows
+			if ex_code != 0:
+				error("Can't install " + file_name)
+				return False
+		except Exception as e:
+			error("Cannot install {0} from {1}".format(file_name, new_dir))
 			return False
 	return True
 
