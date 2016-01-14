@@ -9,6 +9,7 @@ from urllib.parse import urljoin
 import platform
 import tempfile
 import ctypes
+import subprocess
 
 """"""""""""""""""""
 " Global variables "
@@ -52,27 +53,28 @@ def install_from_uri(uri, system, tmp_dir):
 				debug("Folder renamed to 'Applications/{0}'".format(new_dir))
 	elif system in ("Windows_64bit", "Windows_32bit"):
 		#error("Currently not supported")
-		debug("installing from " + file_name + " to " + new_dir)
+		print("installing from " + file_name + " to C:\\Program files\\" + new_dir)
 		try: 
-			debug("{0} /S /D='C:\Program files\{1}'".format(file_name, new_dir))
-			ex_code = os.system("{0} /S /D='C:\Program files\{1}'".format(file_name, new_dir))
+			debug("Unity Installer: {0} /S /D='C:\Program files\{1}'".format(file_name, new_dir))
+			ex_code = subprocess.call("{0} /S /D=C:\Program files\{1}".format(file_name, new_dir))
+			debug("Installation exit code: " + ex_code)
 			#check ex_code in Windows
 			if ex_code != 0:
 				error("Can't install " + file_name)
 				return False
 		except Exception as e:
-			error("Cannot install {0} from {1}".format(file_name, new_dir))
+			error("Cannot install {0} from {1}".format(new_dir, file_name))
 			return False
 	return True
 
 
 def download_file(uri, file_name):
-	debug("Downloading '{0}' into {1}".format(uri, file_name))
+	print("Downloading '{0}' into {1}".format(uri, file_name))
 	r = requests.get(uri, stream=True)
 	with open (file_name, "wb") as fd:
 		for chunk in r.iter_content(100):
 			fd.write(chunk)
-	debug("File {0} sussefully downloaded!".format(file_name))
+	print("File {0} sussefully downloaded!".format(file_name))
 
 
 def file_processing(file, system, tmp_dir):
@@ -100,7 +102,7 @@ def file_processing(file, system, tmp_dir):
 				links_list.append(link)
 			regex = OS_PACK[system]
 			to_install = [i for i in links_list if re.search(regex, i)]
-			debug("Files to download and istall " + " ".join(to_install))
+			debug("File to download and istall " + " ".join(to_install))
 			for uri in to_install:
 				install_from_uri(uri, system, tmp_dir)
 
@@ -112,14 +114,13 @@ def get_url_content(url, repeat=3):
 	while (r.status_code != requests.codes.ok and counter < repeat):
 		r = requests.get(url)
 		counter += 1
-		debug(
+		error(
 			"Repeat request: " + url + " at step " +
 			counter + " with reason " + r.status_code
 		)
 		#if (r.status_code != requests.codes.ok):
 	r.raise_for_status()
 	return r.text
-
 
 
 def usage():
