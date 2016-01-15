@@ -56,12 +56,9 @@ def install_from_uri(uri, system, tmp_dir):
 		print("installing from " + file_name + " to C:\\Program files\\" + new_dir)
 		try: 
 			debug("Unity Installer: {0} /S /D='C:\Program files\{1}'".format(file_name, new_dir))
-			ex_code = subprocess.call("{0} /S /D=C:\Program files\{1}".format(file_name, new_dir))
-			debug("Installation exit code: " + ex_code)
+			subprocess.check_call("{0} /S /D=C:\Program files\{1}".format(file_name, new_dir))
+			debug("Installation completed.")
 			#check ex_code in Windows
-			if ex_code != 0:
-				error("Can't install " + file_name)
-				return False
 		except Exception as e:
 			error("Cannot install {0} from {1}".format(new_dir, file_name))
 			return False
